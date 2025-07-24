@@ -12,4 +12,5 @@ ISR(RTC_PIT_vect)
     RTC.PITINTFLAGS = 1;
     //Serial.print(RTC.PITINTFLAGS ? "$" : ".");
 }
+
 #endif
