@@ -9,6 +9,7 @@ namespace telemetry
 {
     
 Telemetry _telemetry[(int)TelemIndex::DIMENSION]
+
 {
 //   VN   CAUSE [some seem to be missing..]
     {'V', 1<<1}, 
@@ -17,8 +18,6 @@ Telemetry _telemetry[(int)TelemIndex::DIMENSION]
     {'P', 1<<3}, 
     {'L', 1<<5}
 };
-
-bool Telemetry::_dirty;
 
 //----------------------------------------------------------------
 //void Telemetry::set(bool b, bool force)
@@ -34,15 +33,14 @@ bool Telemetry::_dirty;
         //state = TelemState::Old;        
     //}        
 //}
-
 //----------------------------------------------------------------
 void Telemetry::set(float f, bool force)
 {
+    //Serial.printf("set %f", f);
     f *= scale.f;
     
     if(force || state == TelemState::Cold || fabs(f-value.value.f) >= deadband.f )
     {
-        _dirty = true;
         value.value.f = f;
         state = TelemState::New;
     }
@@ -57,7 +55,6 @@ void Telemetry::set(int32_t i, bool force)
 {
     if(force || state == TelemState::Cold || abs(i-value.value.i32) >= deadband.i32 )
     {
-        _dirty = true;
         value.value.i32 = i;
         state = TelemState::New;
     }
@@ -80,11 +77,12 @@ const char* Telemetry::State2Text(TelemState st)
 //----------------------------------------------------------------
 void Telemetry::dump()
 {
-    Serial.printf("%c %s ", varName(), State2Text(state) );
+    Serial.printf("%c %s ", varName(), State2Text(state));
     switch(value.type)
     {
         case ptFloat: 
-            Serial.printf("%f\r\n", (double)value.value.f ); 
+            //Serial.printf("%d ", (int)value.value.f ); 
+            Serial.printf("%f\r\n", value.value.f ); 
             break;
 
         case ptInt32:

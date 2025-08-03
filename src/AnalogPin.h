@@ -6,6 +6,7 @@
 #include "Telemetry.h"
 
 //==================================================================
+template<uint8_t PIN, telemetry::TelemIndex TELEMIX>
 class NullAnalog
 {
 public:
@@ -27,29 +28,32 @@ public:
 template<uint8_t PIN, telemetry::TelemIndex TELEMIX>
 class AnalogPin
 {
-    telemetry::Telemetry& TELEM;
+    telemetry::Telemetry  * const TELEM;
     
 public:
     AnalogPin()
-    : TELEM{telemetry::_telemetry[(int)TELEMIX]}
+    : TELEM{telemetry::_telemetry+(int)TELEMIX}
     {
     }        
     //--------------------------------------------------------------
     void setup()
     {
-        TELEM.scale.f       = 1.0;
-        TELEM.value.type    = psiiot::ptFloat;
+        TELEM->scale.f       = 1.0;
+        TELEM->deadband.f    = 0.0;
+        TELEM->value.type    = psiiot::ptFloat;
     }
     //--------------------------------------------------------------
     void setup(float scale, float deadband)
     {
-        TELEM.scale.f       = scale;
-        TELEM.deadband.f    = deadband;
+        TELEM->scale.f       = scale;
+        TELEM->deadband.f    = deadband;
     }
     //--------------------------------------------------------------
     void read(bool force)
     {
-        TELEM.set( (float) analogRead(PIN), force);
+        auto v = analogRead(PIN);
+        //Serial.printf("rd = %u\r\n", v);
+        TELEM->set( (float)v, force);
     }
     //--------------------------------------------------------------
 };

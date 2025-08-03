@@ -24,10 +24,10 @@ public:
     {
         telemetry::Temperature.scale.f     = 1.0;
         telemetry::Temperature.value.type  = psiiot::ptFloat;
-        telemetry::Temperature.deadband.f  = 0.1;
+        telemetry::Temperature.deadband.f  = 0.5;
         telemetry::Humidity.scale.f        = 1.0;
         telemetry::Humidity.value.type     = psiiot::ptFloat;
-        telemetry::Humidity.deadband.f     = 1;
+        telemetry::Humidity.deadband.f     = 5;
 
         TSENSOR::init();
     }
@@ -46,11 +46,15 @@ public:
     void read(bool force)
     {
         auto tcounts = analogRead(ADCPIN);
+        //Serial.printf("read tadc=%u\r\n", tcounts);
         auto tempRaw = TCOMPUTE::rawTemp(tcounts) + _rawTAdj;
 
+        //Serial.printf("read humid begin\r\n", tcounts);
         TSENSOR::beginCounting();
         // will idle-sleep here
+        //Serial.printf("read humid begun\r\n", tcounts);
         auto hcounts = TSENSOR::endCounting();
+        //Serial.printf("read sensor=%u\r\n", hcounts);
 
         int16_t humidRaw;
         /*auto status = */ TCOMPUTE::computeRH(hcounts, tempRaw, humidRaw);

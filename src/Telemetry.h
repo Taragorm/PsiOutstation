@@ -29,7 +29,8 @@ enum class TelemIndex
     Humidity,
     Pressure,
     Light,
-    DIMENSION
+    DIMENSION,
+    NOTIMPL
 };
 //-----------------------------------------------------------
 struct Telemetry
@@ -40,8 +41,6 @@ struct Telemetry
     psiiot::UnpackedPoint<4>::ValueUnion scale;
     psiiot::UnpackedPoint<4>::ValueUnion deadband;
     
-    static bool _dirty;
-    
     //------------------------------------------------------
     Telemetry(char id, uint8_t acause)
     : cause(acause)
@@ -49,16 +48,6 @@ struct Telemetry
         value.varNo = IOT_ENC(id);
     }
     //------------------------------------------------------            
-    /**
-     * Reset dirty flag, returning original state
-     */
-    static bool resetDirty()
-    {
-        auto ret = _dirty;
-        _dirty = false;
-        return ret;
-    }        
-    //------------------------------------------------------
     void set(float f, bool force);
     void set(int32_t i, bool force);
     //void set(bool b, bool force);

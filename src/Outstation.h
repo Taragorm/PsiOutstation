@@ -27,8 +27,47 @@ public:
     void reset() {}
     void toggle() {}
     void loop() {}
-};
 
+};
+//=======================================================
+class NullOutputFacet : public NullFacet
+{
+public:    
+    void setup() {}
+    void setup(
+                        uint16_t stationID,
+                        uint16_t nodeid,
+                        uint8_t freq,
+                        uint16_t netid
+                        )    
+    {}
+    void send() {}
+};
+//=======================================================
+class NullSensorFacet : public NullFacet
+{
+public:    
+    void setup() {}
+    void read(bool) {}
+};
+//=======================================================
+template<unsigned SEC>
+class DelaySleep 
+{
+public:
+    void setup() {}
+
+    void sleep()
+    {
+        for(int i=0; i<SEC; ++i)
+            delay(1000);
+    }
+
+    void setupSleepPinStates(const void*)
+    {}
+
+    void wake() {}
+};
 
 //=======================================================
 //class HS1101
@@ -45,24 +84,43 @@ public:
 /**
  * Facet to control a power pin
  */
-template<uint8_t PIN>
+template<uint8_t PIN, bool DEF>
 class ControlPin
 {
 public:
+    const bool OFF = DEF;
+    const bool ON  = !DEF;
     constexpr bool implemented() { return true; }
     //---------------------------------------------------
     void setup()
     {
-        digitalWriteFast(PIN,0);
         pinMode(PIN, OUTPUT);
+        digitalWriteFast(PIN,DEF);
+        //digitalWrite(PIN,DEF);
     }
 
     //---------------------------------------------------
+    /**
+     * Sets the REAL state of the pin
+     */
     void set(bool st=true)
     {
         digitalWriteFast(PIN,st);
     }
-
+    //---------------------------------------------------
+    /**
+     * Set the state of the pin vs the defined default.
+     * 
+     */
+    void setLogical(bool st=true)
+    {
+        //Serial.printf("Setting %d = log %d\r\n", PIN, st); delay(20);
+        if(st)
+            digitalWriteFast(PIN, ON );
+        else
+            digitalWriteFast(PIN, OFF );
+        //digitalWrite(PIN, DEF ? !st : st );
+    }
     //---------------------------------------------------
     void reset()
     {
@@ -74,8 +132,56 @@ public:
         digitalWriteFast(PIN, !digitalReadFast(PIN));
     }
     //---------------------------------------------------
+    bool def() const { return DEF; }
+    //---------------------------------------------------
+    void delay(uint32_t ms)
+    {
+        ::delay(ms);
+    }
 };
 //=======================================================
+/**
+ * Facet to look like a control pin
+ */
+template<uint8_t PIN, bool DEF>
+class NullControlPin
+{
+public:
+    constexpr bool implemented() { return false; }
+    //---------------------------------------------------
+    void setup()
+    {
+    }
+
+    //---------------------------------------------------
+    /**
+     * Sets the REAL state of the pin
+     */
+    void set(bool st=true)
+    {
+    }
+    //---------------------------------------------------
+    /**
+     * Set the state of the pin vs the defined default.
+     * 
+     */
+    void setLogical(bool st=true)
+    {
+    }
+    //---------------------------------------------------
+    void reset()
+    {
+    }
+    //---------------------------------------------------
+    void toggle()
+    {
+    }
+    //---------------------------------------------------
+    bool def() const { return DEF; }
+    //---------------------------------------------------
+    void delay(uint32_t ms) {}
+    //---------------------------------------------------
+};
 //=======================================================
 /**
  * Templated class for an outstation that uses facet
@@ -90,14 +196,7 @@ template<
         typename TSLEEP,
         typename TOUTPUT
         >
-class IotStation
-    :   public TCLIMATE,
-        public TLIGHT,
-        public TLED,
-        public TPOWERPIN,
-        public TSLEEP,
-        public TBATT,
-        public TOUTPUT
+class IotStation    
 {
     inline static uint8_t _sendAllInterval;
     inline static uint8_t _sendAllCount;
@@ -108,32 +207,50 @@ public:
     typedef TBATT batt_t;
     typedef TLIGHT light_t;
     typedef TOUTPUT output_t;
+    typedef TPOWERPIN powerpin_t;
+    typedef TLED led_t;
 
+    sleep_t sleep;
+    climate_t climate;
+    batt_t battery;
+    light_t lightsensor;
+    powerpin_t powerpin;
+    led_t ledpin;
+    output_t output;
     //---------------------------------------------------
     IotStation()
     {
     }
-
+    //---------------------------------------------------
+    void led(bool st)
+    {
+        ledpin.setLogical(st);
+    }
     //---------------------------------------------------
     void setup(uint8_t sendAllInterval=8)
     {
         _sendAllInterval = sendAllInterval;
 
-        TCLIMATE::setup();
-        TLIGHT::setup();
-        TLED::setup();
-        TPOWERPIN::setup();
-        TSLEEP::setup();
-        TBATT::setup();
-        TOUTPUT::setup();
+        climate.setup();
+        lightsensor.setup();
+        ledpin.setup();
+        powerpin.setup();
+        sleep.setup();
+        battery.setup();
+        output.setup();
     }
-
     //---------------------------------------------------
     void loop()
     {
-        wdt_reset();        
-        TSLEEP::wake();
-        TLED::toggle();
+        //Serial.println("Wake"); delay(100);
+        
+        wdt_reset(); 
+        //Serial.println(__LINE__); delay(100);
+        powerpin.setLogical(true);       
+        //Serial.println(__LINE__); delay(100);
+        powerpin.delay(50);
+        sleep.wake();
+        //Serial.println(__LINE__); delay(100);
 
         // Every so often send everything
         bool force = false;
@@ -145,39 +262,27 @@ public:
         else
             --_sendAllCount;
 
-        TBATT::read(force);
-        TLIGHT::read(force);
-        TCLIMATE::read(force);
-
-        TOUTPUT::send();
-
-        TSLEEP::sleep();
+        battery.read(force);
+        lightsensor.read(force);
+        climate.read(force);
+        output.send();
+        delay(10);
+        //Serial.println(__LINE__); delay(100);
+        powerpin.setLogical(false);       
+        //Serial.println(__LINE__); delay(100);
+        sleep.sleep();
+        //Serial.println(__LINE__); delay(100);
     }
     //---------------------------------------------------
     void toggleLed()
     {
-        TLED::toggle();
-    }
-    //---------------------------------------------------
-    void led(bool st)
-    {
-        TLED::set(st);
+        ledpin.toggle();
     }
     //---------------------------------------------------
     void powerSwitch(bool st)
     {
-        TPOWERPIN::set(st);
+        powerpin.setLogical(st);
     }
-    //---------------------------------------------------
-    batt_t& vbatt() { return (TBATT&)*this; }
-    //---------------------------------------------------
-    light_t& light() { return (TLIGHT&)*this; }
-    //---------------------------------------------------
-    climate_t& climate() { return (TCLIMATE&)*this; }
-    //---------------------------------------------------
-    output_t& output() { return (TOUTPUT&)*this; }
-    //---------------------------------------------------
-    sleep_t& sleepController() { return (TSLEEP&)*this; }
     //---------------------------------------------------
     void dumpTelemetry()
     {
