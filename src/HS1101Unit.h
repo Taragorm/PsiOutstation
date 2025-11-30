@@ -7,7 +7,8 @@
 template<
     uint8_t ADCPIN,
     typename TCOMPUTE,
-    typename TSENSOR
+    typename TSENSOR,
+    uint8_t OVERSAMPLE_BITS = 3
     >
 class HS1101Unit : TCOMPUTE, TSENSOR
 {
@@ -24,10 +25,10 @@ public:
     {
         telemetry::Temperature.scale.f     = 1.0;
         telemetry::Temperature.value.type  = psiiot::ptFloat;
-        telemetry::Temperature.deadband.f  = 0.5;
+        telemetry::Temperature.deadband.f  = 1.0;
         telemetry::Humidity.scale.f        = 1.0;
         telemetry::Humidity.value.type     = psiiot::ptFloat;
-        telemetry::Humidity.deadband.f     = 5;
+        telemetry::Humidity.deadband.f     = 7;
 
         TSENSOR::init();
     }
@@ -45,7 +46,17 @@ public:
     //--------------------------------------------------------------
     void read(bool force)
     {
-        auto tcounts = analogRead(ADCPIN);
+        //
+        // Oversample just to make the lower bits a touch more stable
+        uint16_t tcounts = 0;
+        for(uint8_t s=0; s< (1<<OVERSAMPLE_BITS); ++s)
+        {
+            if(s>0) delay(5);
+            tcounts += analogRead(ADCPIN);
+        }
+
+        tcounts >>= OVERSAMPLE_BITS;
+
         //Serial.printf("read tadc=%u\r\n", tcounts);
         auto tempRaw = TCOMPUTE::rawTemp(tcounts) + _rawTAdj;
 

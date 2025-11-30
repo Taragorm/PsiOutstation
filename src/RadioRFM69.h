@@ -101,6 +101,7 @@ public:
             Serial.println("Radio init fail!");
             return;
         }
+        
 #ifdef RADIO_TX_POWER
         _radio.setPowerLevel(RADIO_TX_POWER);
 #endif
