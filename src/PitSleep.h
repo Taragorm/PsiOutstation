@@ -35,14 +35,16 @@ public:
     //---------------------------------------------------
     static void sleep()
     {
+        Base::sleep(); // set some pin modes
         set_sleep_mode(SLEEP_MODE_PWR_DOWN);
         sleep_enable();
         for(unsigned n=0; n<SEC; ++n)
         {
+            wdt_reset();
+            //Serial.print('*'); delay(5);
             sleep_cpu(); //Go into sleep
-            wdt_reset();            
         }            
-        Base::sleep();
+        Base::wake(); // restore some pin modes
     }
     //---------------------------------------------------
 };
