@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <psiiot.h>
+#include <psiutil.h>
 #include <RFM69.h>         //get it here: https://www.github.com/lowpowerlab/rfm69
 #include <RFM69_ATC.h>     //get it here: https://www.github.com/lowpowerlab/rfm69
 #include "Telemetry.h"
@@ -88,6 +89,7 @@ public:
         if(!isNewTelemetry())
         {
             //Serial.println("No telemetry change");
+            XTRACE("T-");
             return;
         }
 
@@ -98,7 +100,7 @@ public:
         //Serial.printf("radio Fr=%d, Nd=%d Nt=%d\r\n", _freq, _nodeid, _netid);
         if(!ok)
         {
-            Serial.println("Radio init fail!");
+            Serial.println("!RIF");
             return;
         }
         
@@ -141,6 +143,7 @@ public:
         if(!pointCount)
         {
             //Serial.println("NO DATA");
+            XTRACE("D-");
             return;
         }
 
@@ -165,6 +168,8 @@ public:
             _radio.send(GW_NODEID, _buff.buffer(), bytes );
             ok = true;
         }
+        
+        XTRACE("Tx");
 
         ok = ok; // might want this later
 

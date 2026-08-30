@@ -30,7 +30,6 @@ public:
         telemetry::Pressure.value.type     = psiiot::ptFloat;
         telemetry::Pressure.deadband.f     = 10;
 
-        _bme.begin();
     }
     //--------------------------------------------------------------
     void setup(float tempDeadband, float humidDeadband)
@@ -46,18 +45,14 @@ public:
     //--------------------------------------------------------------
     void read(bool force)
     {
-        auto tcounts = analogRead(ADCPIN);
-        auto tempRaw = TCOMPUTE::rawTemp(tcounts) + _rawTAdj;
-
-        TSENSOR::beginCounting();
-        // will idle-sleep here
-        auto hcounts = TSENSOR::endCounting();
-
-        int16_t humidRaw;
-        /*auto status = */ TCOMPUTE::computeRH(hcounts, tempRaw, humidRaw);
-
-        telemetry::Temperature.set( (float)TCOMPUTE::scaleTemp(tempRaw), force );
-        telemetry::Humidity.set( (float)TCOMPUTE::scaleHumid(humidRaw), force );
+        _bme.beginSPI(CSPIN);
+        float t = _bme.readTempC();
+        float h = _bme.readFloatHumidity();
+        float p = _bme.readFloatPressure();
+        //XTRACEF2("t=%d,h=%d,p=%d\r\n", (int)t, (int)h, (int)p);
+        telemetry::Temperature.set( t, force );
+        telemetry::Humidity.set( h, force );
+        telemetry::Pressure.set( p, force );
     }
     //--------------------------------------------------------------
 };

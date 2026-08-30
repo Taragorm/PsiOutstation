@@ -13,6 +13,8 @@
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 #include <clocks.h>
+#include <Telemetry.h>
+#include <psiutil.h>
 
 //=======================================================
 class NullFacet
@@ -230,27 +232,25 @@ public:
     void setup(uint8_t sendAllInterval=8)
     {
         _sendAllInterval = sendAllInterval;
-
+        XTRACEC('1');
         climate.setup();
+        XTRACEC('2');
         lightsensor.setup();
         ledpin.setup();
         powerpin.setup();
         sleep.setup();
         battery.setup();
         output.setup();
+        XTRACEC('9');
+
     }
     //---------------------------------------------------
     void loop()
     {
-        //Serial.println("Wake"); delay(100);
-        
         wdt_reset(); 
-        //Serial.println(__LINE__); delay(100);
         powerpin.setLogical(true);       
-        //Serial.println(__LINE__); delay(100);
         powerpin.delay(50);
         sleep.wake();
-        //Serial.println(__LINE__); delay(100);
 
         // Every so often send everything
         bool force = false;
@@ -267,11 +267,8 @@ public:
         climate.read(force);
         output.send();
         delay(10);
-        //Serial.println(__LINE__); delay(100);
         powerpin.setLogical(false);       
-        //Serial.println(__LINE__); delay(100);
         sleep.sleep();
-        //Serial.println(__LINE__); delay(100);
     }
     //---------------------------------------------------
     void toggleLed()

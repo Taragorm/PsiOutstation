@@ -52,7 +52,7 @@ public:
     void read(bool force)
     {
         auto v = analogRead(PIN);
-        //Serial.printf("rd = %u\r\n", v);
+        //XTRACEF2("rd=%u\r\n", v);
         TELEM->set( (float)v, force);
     }
     //--------------------------------------------------------------
