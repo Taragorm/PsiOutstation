@@ -11,7 +11,7 @@ template<
 class BME280Unit
 {
     BME280 _bme;
-    
+    float _tempOffset;
 public:
     //--------------------------------------------------------------
     BME280Unit()
@@ -38,6 +38,11 @@ public:
         telemetry::Humidity.deadband.f     = humidDeadband;
     }
     //--------------------------------------------------------------
+    void setTempOffset(float tempOffset)
+    {
+        _tempOffset =  tempOffset;
+    }
+    //--------------------------------------------------------------
     void tAdjust(float f)
     {
         //_rawTAdj = (int16_t)(f*TCOMPUTE::_therm_table_scale+0.5);
@@ -45,11 +50,11 @@ public:
     //--------------------------------------------------------------
     void read(bool force)
     {
-        _bme.beginSPI(CSPIN);
-        float t = _bme.readTempC();
+        _bme.beginSPI(CSPIN);    
+        float t = _bme.readTempC() + _tempOffset;
         float h = _bme.readFloatHumidity();
         float p = _bme.readFloatPressure();
-        //XTRACEF2("t=%d,h=%d,p=%d\r\n", (int)t, (int)h, (int)p);
+        XTRACEF2("t=%d,h=%d,p=%ul\r\n", (int)(t*10), (int)h, (unsigned long)p);
         telemetry::Temperature.set( t, force );
         telemetry::Humidity.set( h, force );
         telemetry::Pressure.set( p, force );
