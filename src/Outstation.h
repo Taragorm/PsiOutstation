@@ -40,7 +40,8 @@ public:
                         uint16_t stationID,
                         uint16_t nodeid,
                         uint8_t freq,
-                        uint16_t netid
+                        uint16_t netid,
+                        void* cb                        
                         )    
     {}
     void send() {}
@@ -96,8 +97,8 @@ public:
     //---------------------------------------------------
     void setup()
     {
-        pinMode(PIN, OUTPUT);
         digitalWriteFast(PIN,DEF);
+        pinMode(PIN, OUTPUT);
         //digitalWrite(PIN,DEF);
     }
 
@@ -247,28 +248,39 @@ public:
     //---------------------------------------------------
     void loop()
     {
+        XTRACEC('W');
         wdt_reset(); 
+        XTRACEC('P');
         powerpin.setLogical(true);       
         powerpin.delay(50);
+        XTRACEC('w');
         sleep.wake();
 
         // Every so often send everything
         bool force = false;
         if(_sendAllCount==0)
         {
+            XTRACEC('A');
             force = true;
             _sendAllCount = _sendAllInterval-1;
         }
         else
             --_sendAllCount;
 
+        XTRACEC('B');
         battery.read(force);
+        XTRACEC('L');
         lightsensor.read(force);
+        XTRACEC('C');
         climate.read(force);
+        XTRACEC('O');
         output.send();
         delay(10);
+        XTRACEC('p');
         powerpin.setLogical(false);       
+        XTRACEC('S');
         sleep.sleep();
+        XTRACEC('X');
     }
     //---------------------------------------------------
     void toggleLed()
