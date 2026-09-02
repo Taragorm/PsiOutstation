@@ -51,13 +51,17 @@ public:
     void read(bool force)
     {
         _bme.beginSPI(CSPIN);    
+        while(_bme.isMeasuring() ) ;
         float t = _bme.readTempC() + _tempOffset;
         float h = _bme.readFloatHumidity();
         float p = _bme.readFloatPressure();
-        //XTRACEF2("t=%d,h=%d,p=%ul\r\n", (int)(t*10), (int)h, (unsigned long)p);
-        telemetry::Temperature.set( t, force );
-        telemetry::Humidity.set( h, force );
-        telemetry::Pressure.set( p, force );
+        if(p>0) 
+        {
+            //XTRACEF2("t=%d,h=%d,p=%ul\r\n", (int)(t*10), (int)h, (unsigned long)p);
+            telemetry::Temperature.set( t, force );
+            telemetry::Humidity.set( h, force );
+            telemetry::Pressure.set( p, force );
+        }
     }
     //--------------------------------------------------------------
 };
